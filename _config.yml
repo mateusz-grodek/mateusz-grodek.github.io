@@ -20,7 +20,7 @@ title                    : "Data Engineering Polska"
 title_separator          : "-"
 subtitle                 : # site tagline that appears below site title in masthead
 name                     : "Mateusz Gródek"
-description              : "Trochę o inżynierii danych."
+description              : "Storna poświęcona inżynierii danych, data engineering, analiza danych"
 url                      : # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 baseurl                  : # the subpath of your site, e.g. "/blog"
 repository               : # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
@@ -106,7 +106,7 @@ analytics:
 author:
   name             : "Mateusz Gródek"
   avatar           : "/assets/images/mgrodek_linkedin_photo.png"
-  bio              : "Najlepiej sie uczyć ucząc innych dlatego powstał ten blog"
+  bio              : "Najlepiej się uczy, ucząc innych, dlatego powstał ten blog. Zapraszam również na groupę fb, w której wpsólnie dzielimy się wiedzą. Jeśli chcesz się ze mną skontaktować pisz śmiało na Linkedin."
   location         : "Warszawa"
   email            :
   links:
@@ -153,6 +153,9 @@ footer:
     - label: "Instagram"
       icon: "fab fa-fw fa-instagram"
       # url:
+    - label: "Linkdin"
+      icon: "fab fa-fw fa-linkedin"
+      url: "https://www.linkedin.com/in/mateusz-grodek/"
 
 
 # Reading Files
