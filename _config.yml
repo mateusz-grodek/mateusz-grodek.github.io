@@ -105,7 +105,7 @@ analytics:
 # Site Author
 author:
   name             : "Mateusz Gródek"
-  avatar           : "/assets/images/mgrodek_linkedin_photo.png"
+  avatar           : #"/assets/images/mgrodek_linkedin_photo.png"
   bio              : "Najlepiej sie uczyć ucząc innych dlatego powstał ten blog"
   location         : "Warszawa"
   email            :
