@@ -10,7 +10,7 @@
 # Review documentation to determine if you should use `theme` or `remote_theme`
 # https://mmistakes.github.io/minimal-mistakes/docs/quick-start-guide/#installing-the-theme
 
-# theme                  : "minimal-mistakes-jekyll"
+theme                    : "minimal-mistakes-jekyll"
 # remote_theme           : "mmistakes/minimal-mistakes"
 minimal_mistakes_skin    :  "dark" #, "default" , "air", "aqua", "contrast", "dirt", "neon", "mint", "plum", "sunrise"
 
@@ -106,7 +106,7 @@ analytics:
 author:
   name             : "Mateusz Gródek"
   avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
-  bio              : "Najlepiej sie uczyć ucząć innych dlatego powstajał ten blog"
+  bio              : "Najlepiej sie uczyć ucząc innych dlatego powstał ten blog"
   location         : "Warszawa"
   email            :
   links:
@@ -137,7 +137,7 @@ footer:
       # url:
     - label: "Facebook"
       icon: "fab fa-fw fa-facebook-square"
-      # url:
+      url: "https://www.facebook.com/groups/dataengineeringpolska"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
       # url:
