@@ -45,36 +45,36 @@ W pierwszym przykładzie wygenerujemy kolejne daty dla przedziału czasowego w k
 Przygotujmy dane:
 
 ```sql
-CREATE TABLE events (
+CREATE TABLE buckets (
     id int8 GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    event_start DATE NOT NULL,
-    event_end DATE NOT NULL,
-    CHECK (event_end >= event_start)
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    CHECK (end_date >= start_date)
 );
 ```
 
 ```sql
-WITH event_starts AS (
-    SELECT now() - '2 weeks'::INTERVAL * random() AS START
+WITH bucket_starts AS (
+    SELECT now() - '1 weeks'::INTERVAL * random() AS START
     FROM generate_series(1,5) i
 )
-INSERT INTO events (event_start, event_end)
+INSERT INTO buckets (start_date, end_date)
 SELECT
     START,
     START + '3 days'::INTERVAL + random() * '4 days'::INTERVAL
 FROM
-    event_starts;
+    bucket_starts;
 ```
 
 ```sql
-SELECT * FROM events;
- id | event_start | event_end  
+SELECT * FROM buckets;
+ id | start_date  | end_date  
 ----+-------------+------------
-  1 | 2022-09-15  | 2022-09-22
-  2 | 2022-09-06  | 2022-09-11
-  3 | 2022-09-06  | 2022-09-10
-  4 | 2022-09-12  | 2022-09-18
-  5 | 2022-09-05  | 2022-09-10
+1	| 2024-03-10  | 2024-03-15
+2	| 2024-03-09  | 2024-03-13
+3	| 2024-03-10  | 2024-03-17
+4	| 2024-03-06  | 2024-03-13
+5	| 2024-03-08  | 2024-03-11
 ```
 
 Stworzyliśmy tabelę z 5 koszykami. Aby wgenerować kolejne daty z koszyka możemy wykorzystać funkcję lateral join.
@@ -82,47 +82,48 @@ Stworzyliśmy tabelę z 5 koszykami. Aby wgenerować kolejne daty z koszyka moż
 ```sql
 SELECT
     e.*,
-    l.*
+    l.day_lateral
 FROM
-    events e,
+    buckets e,
     lateral (
-        SELECT x::DATE
-        FROM generate_series(e.event_start, e.event_end, '1 day'::INTERVAL) AS x
+        SELECT day_lateral::DATE
+        FROM generate_series(e.start_date, e.end_date, '1 day'::INTERVAL) AS day_lateral
     ) AS l
 
 
-id | event_start | event_end  |     x      
+id  | start_date  | end_date   |     day_lateral      
 ----+-------------+------------+------------
-  1 | 2022-09-15  | 2022-09-22 | 2022-09-15
-  1 | 2022-09-15  | 2022-09-22 | 2022-09-16
-  1 | 2022-09-15  | 2022-09-22 | 2022-09-17
-  1 | 2022-09-15  | 2022-09-22 | 2022-09-18
-  1 | 2022-09-15  | 2022-09-22 | 2022-09-19
-  1 | 2022-09-15  | 2022-09-22 | 2022-09-20
-  1 | 2022-09-15  | 2022-09-22 | 2022-09-21
-  1 | 2022-09-15  | 2022-09-22 | 2022-09-22
-  2 | 2022-09-06  | 2022-09-11 | 2022-09-06
-  2 | 2022-09-06  | 2022-09-11 | 2022-09-07
-  2 | 2022-09-06  | 2022-09-11 | 2022-09-08
-  2 | 2022-09-06  | 2022-09-11 | 2022-09-09
-  2 | 2022-09-06  | 2022-09-11 | 2022-09-10
-  2 | 2022-09-06  | 2022-09-11 | 2022-09-11
-  3 | 2022-09-06  | 2022-09-10 | 2022-09-06
-  3 | 2022-09-06  | 2022-09-10 | 2022-09-07
-  3 | 2022-09-06  | 2022-09-10 | 2022-09-08
-  3 | 2022-09-06  | 2022-09-10 | 2022-09-09
-  3 | 2022-09-06  | 2022-09-10 | 2022-09-10
-  4 | 2022-09-12  | 2022-09-18 | 2022-09-12
-  4 | 2022-09-12  | 2022-09-18 | 2022-09-13
-  4 | 2022-09-12  | 2022-09-18 | 2022-09-14
-  4 | 2022-09-12  | 2022-09-18 | 2022-09-15
-  4 | 2022-09-12  | 2022-09-18 | 2022-09-16
-  4 | 2022-09-12  | 2022-09-18 | 2022-09-17
-  4 | 2022-09-12  | 2022-09-18 | 2022-09-18
-  5 | 2022-09-05  | 2022-09-10 | 2022-09-05
-  5 | 2022-09-05  | 2022-09-10 | 2022-09-06
-  5 | 2022-09-05  | 2022-09-10 | 2022-09-07
-  5 | 2022-09-05  | 2022-09-10 | 2022-09-08
-  5 | 2022-09-05  | 2022-09-10 | 2022-09-09
-  5 | 2022-09-05  | 2022-09-10 | 2022-09-10
+1	| 2024-03-10  |	2024-03-15 | 2024-03-10
+1	| 2024-03-10  |	2024-03-15 | 2024-03-11
+1	| 2024-03-10  |	2024-03-15 | 2024-03-12
+1	| 2024-03-10  |	2024-03-15 | 2024-03-13
+1	| 2024-03-10  |	2024-03-15 | 2024-03-14
+1	| 2024-03-10  |	2024-03-15 | 2024-03-15
+2	| 2024-03-09  |	2024-03-13 | 2024-03-09
+2	| 2024-03-09  |	2024-03-13 | 2024-03-10
+2	| 2024-03-09  |	2024-03-13 | 2024-03-11
+2	| 2024-03-09  |	2024-03-13 | 2024-03-12
+2	| 2024-03-09  |	2024-03-13 | 2024-03-13
+3	| 2024-03-10  |	2024-03-17 | 2024-03-10
+3	| 2024-03-10  |	2024-03-17 | 2024-03-11
+3	| 2024-03-10  |	2024-03-17 | 2024-03-12
+3	| 2024-03-10  |	2024-03-17 | 2024-03-13
+3	| 2024-03-10  |	2024-03-17 | 2024-03-14
+3	| 2024-03-10  |	2024-03-17 | 2024-03-15
+3	| 2024-03-10  |	2024-03-17 | 2024-03-16
+3	| 2024-03-10  |	2024-03-17 | 2024-03-17
+4	| 2024-03-06  |	2024-03-13 | 2024-03-06
+4	| 2024-03-06  |	2024-03-13 | 2024-03-07
+4	| 2024-03-06  |	2024-03-13 | 2024-03-08
+4	| 2024-03-06  |	2024-03-13 | 2024-03-09
+4	| 2024-03-06  |	2024-03-13 | 2024-03-10
+4	| 2024-03-06  |	2024-03-13 | 2024-03-11
+4	| 2024-03-06  |	2024-03-13 | 2024-03-12
+4	| 2024-03-06  |	2024-03-13 | 2024-03-13
+5	| 2024-03-08  |	2024-03-11 | 2024-03-08
+5	| 2024-03-08  |	2024-03-11 | 2024-03-09
+5	| 2024-03-08  |	2024-03-11 | 2024-03-10
+5	| 2024-03-08  |	2024-03-11 | 2024-03-11
 ```
+
+Szybkie wyjaśnienie. Dla każdego wiersza z tabeli buckets generujemy dni pomiędzy start_date, a end_date. Dla pierwszego wiersza 2024-03-10 i 2024-03-15 będzie to 6 dni, które najpierw generujemy, następnie przypisują się do koszyka i sprawdzamy kolejny wiersz z tabeli bucket. Kolejny wiersz to 2024-03-09 i 2024-03-13, co daje nam 5 dni różnicy, zatem dla każdego koszyka LATERAL wygeneruje inną liczę wierszy.  Co ważne w naszym lateral subquery możemy się odniść do informacji z tabeli buckets w tym przypadku e.start_date i e.end_date `FROM generate_series(e.start_date, e.end_date, '1 day'::INTERVAL) AS day_lateral` w klasycznym podzapytaniu sypnęłoby błędem. 
