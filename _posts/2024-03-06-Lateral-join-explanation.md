@@ -3,7 +3,7 @@ title: "Lateral join: Wyjaśnienie i prosty przykład"
 toc: true
 ---
 
-Lateral join to obok left, right, inner i outer join kolejny ze sposobów złączeń w relacyjnych bazach danych. Pozwala na wygenerowanie wielu wierszy na podstawie pojedynczego wiersza danych oraz do odniesienia się do zmiennej z pozapytania. Wykorzystywany w PostgreSQL, Oracle, DB2  MS SQL. Jego znajomość jest przydane i warto się jej przyjrzeć. Może dzięki temu zaoczędzicie w przyszłości czas na szukanie rozwiązania lub zabłyśniecie na rozmowie rekrutacyjnej.
+Lateral join to obok left, right, inner i outer join kolejny ze sposobów złączeń w relacyjnych bazach danych. Pozwala na wygenerowanie wielu wierszy na podstawie pojedynczego wiersza danych oraz do odniesienia się do zmiennej z poza podzapytania. Wykorzystywany w PostgreSQL, Oracle, DB2  MS SQL. Jego znajomość jest przydane i warto się jej przyjrzeć. Może dzięki temu zaoczędzicie w przyszłości czas na szukanie rozwiązania lub zabłyśniecie na rozmowie rekrutacyjnej.
 
 
 ### Jak działa SELECT
@@ -68,8 +68,8 @@ FROM
 
 ```sql
 SELECT * FROM buckets;
- id | start_date  | end_date  
-----+-------------+------------
+ id     | start_date  | end_date  
+--------+-------------+------------
 1	| 2024-03-10  | 2024-03-15
 2	| 2024-03-09  | 2024-03-13
 3	| 2024-03-10  | 2024-03-17
@@ -91,8 +91,8 @@ FROM
     ) AS l
 
 
-id  | start_date  | end_date   |     day_lateral      
-----+-------------+------------+------------
+id      | start_date  | end_date   | day_lateral      
+--------+-------------+------------+------------------
 1	| 2024-03-10  |	2024-03-15 | 2024-03-10
 1	| 2024-03-10  |	2024-03-15 | 2024-03-11
 1	| 2024-03-10  |	2024-03-15 | 2024-03-12
@@ -161,13 +161,13 @@ INSERT INTO users_table VALUES
 SELECT  * FROM products_table LIMIT 7;
 id  | price       | product    |    
 ----+-------------+------------+
-1	| 1.3157565077| product 1  |
-2	| 1.7794870667| product 2  |
-3	| 14.367369866| product 3  |
-4	| 7.9555639835| product 4  |
-5	| 12.231595441| product 5  |
-6	| 23.543000974| product 6  |
-7	| 13.834326571| product 7  |
+1   | 1.3157565077| product 1  |
+2   | 1.7794870667| product 2  |
+3   | 14.367369866| product 3  |
+4   | 7.9555639835| product 4  |
+5   | 12.231595441| product 5  |
+6   | 23.543000974| product 6  |
+7   | 13.834326571| product 7  |
 					 		 
 ```
 
@@ -175,16 +175,16 @@ id  | price       | product    |
 SELECT  * FROM  users_table;
 id  | user       | cash    |    
 ----+------------+-------- +
-1	| Jurek	     |  502    |
-2	| Kamil	     |  2310   |
-3	| Czaro	     |  65     |
+1   | Jurek      |  502    |
+2   | Kamil      |  2310   |
+3   | Czaro      |  65     |
 ```
 
 Teraz przykad jakie kroki musimy wykonać aby uzyskać pożądany wynik. Użyjemy takiego pseudopythona:
 
 ```python
 for user in users_table:
-    for product in products_table.orderby(price,desc): #Zakładamy że tak wyglądała by posortowana tabela z produktami
+    for product in products_table.orderby(price,desc): #Zakładamy że tak wyglądałaby posortowana tabela z produktami
            if products_table.price <= users_table.cash:
                 found+=1
                 print(user, product)
@@ -208,17 +208,17 @@ FROM      users_table AS u,
        ) AS x
 ORDER BY u.id, price DESC;
 
-id  | username   | cash    |  productt_id |  price    |   
-----+------------+-------- +
+id      | username   | cash    |  productt_id |  price    |   
+--------+------------+-------- +--------------+-------------
 1	| Jurek	     |   502   | product 741  |498.3935036|
 1	| Jurek	     |   502   | product 143  |497.1360881|
 1	| Jurek	     |   502   | product 162  |488.6783401|
 2	| Kamil	     |   2310  | product 973  |2304.653878|
 2	| Kamil	     |   2310  | product 275  |2304.328873|
 2	| Kamil	     |   2310  | product 303  |2293.111048|
-3	| Czaro	     |   65	   | product 10	  |62.28928108|
-3	| Czaro	     |   65	   | product 86	  |59.72326317|
-3	| Czaro	     |   65	   | product 593  |56.70062070|
+3	| Czaro	     |   65    | product 10   |62.28928108|
+3	| Czaro	     |   65    | product 86   |59.72326317|
+3	| Czaro	     |   65    | product 593  |56.70062070|
 ```
 
 Krótkie wyjaśnienie. Patrzymy na pierwszy wiersz z tabeli users_table. Mamy Jurka który ma na koncie 502zł, następnie z posortowanej po cenie malejąco listy produktów pokolei patrzymy czy produkt mieści się w budżecie. Jeśli nie to sprawdzamy kolejny. Jeśli jest ok to przpisujemy i lecimy dalej aż znajdziemy 3 produkty. Później przechodzimy do kolejnego usera. Tu poraz kolejny warto zauważyć że w podzapytaniu LATERAL porwónujemy kolumne p.price z zewnętrzą kolumną u.cash z tabeli user_table. W klasycznym JOIN to by nie przeszło :( .
