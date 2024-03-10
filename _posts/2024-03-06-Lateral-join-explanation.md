@@ -127,3 +127,103 @@ id  | start_date  | end_date   |     day_lateral
 ```
 
 Szybkie wyjaśnienie. Dla każdego wiersza z tabeli buckets generujemy dni pomiędzy start_date, a end_date. Dla pierwszego wiersza 2024-03-10 i 2024-03-15 będzie to 6 dni, które najpierw generujemy, następnie przypisują się do koszyka i sprawdzamy kolejny wiersz z tabeli bucket. Kolejny wiersz to 2024-03-09 i 2024-03-13, co daje nam 5 dni różnicy, zatem dla każdego koszyka LATERAL wygeneruje inną liczę wierszy.  Co ważne w naszym lateral subquery możemy się odniść do informacji z tabeli buckets w tym przypadku e.start_date i e.end_date `FROM generate_series(e.start_date, e.end_date, '1 day'::INTERVAL) AS day_lateral` w klasycznym podzapytaniu sypnęłoby błędem. 
+
+
+### Przykład nr. 2
+
+Stworzymy 2 tabelki. W jednej będzie nazwa użytkownika i dostępne środki na koncie. W drugiej tabelce będą produky z ich ceną. Naszym zdaniem będzie przypisanie każdemu użytkownikowi top 3 najdroższe produkty na które go stać. 
+
+Najpierw przykładowe dane:
+
+```sql
+CREATE TABLE products_table AS
+    SELECT   id,
+             id * 10 * random() AS price,
+             'product ' || id AS product
+    FROM generate_series(1, 1000) AS id;
+```
+
+```sql
+CREATE TABLE users_table
+(
+    id                 int,
+    username           text,
+    cash               numeric
+);
+ 
+INSERT INTO users_table VALUES
+    (1, 'Jurek', '502'),
+    (2, 'Kamil', '2310'),
+    (3, 'Czaro', '65')
+```
+
+```sql
+SELECT  * FROM products_table LIMIT 7;
+id  | price       | product    |    
+----+-------------+------------+
+1	| 1.3157565077| product 1  |
+2	| 1.7794870667| product 2  |
+3	| 14.367369866| product 3  |
+4	| 7.9555639835| product 4  |
+5	| 12.231595441| product 5  |
+6	| 23.543000974| product 6  |
+7	| 13.834326571| product 7  |
+					 		 
+```
+
+```sql
+SELECT  * FROM  users_table;
+id  | user       | cash    |    
+----+------------+-------- +
+1	| Jurek	     |  502    |
+2	| Kamil	     |  2310   |
+3	| Czaro	     |  65     |
+```
+
+Teraz przykad jakie kroki musimy wykonać aby uzyskać pożądany wynik. Użyjemy takiego pseudopythona:
+
+```python
+for user in users_table:
+    for product in products_table.orderby(price,desc): #Zakładamy że tak wyglądała by posortowana tabela z produktami
+           if products_table.price <= users_table.cash:
+                found+=1
+                print(user, product)
+                if found >3:
+                    break
+           else:
+               jump to next product
+           end
+```
+
+I teraz jak zaimplementować to z użyciem LATERALa:
+
+```sql
+SELECT        *
+FROM      users_table AS u,
+    LATERAL  (SELECT      *
+        FROM       products_table  AS p
+        WHERE       p.price < u.cash
+        ORDER BY p.price DESC
+        LIMIT 3
+       ) AS x
+ORDER BY u.id, price DESC;
+
+id  | username   | cash    |  productt_id |  price    |   
+----+------------+-------- +
+1	| Jurek	     |   502   | product 741  |498.3935036|
+1	| Jurek	     |   502   | product 143  |497.1360881|
+1	| Jurek	     |   502   | product 162  |488.6783401|
+2	| Kamil	     |   2310  | product 973  |2304.653878|
+2	| Kamil	     |   2310  | product 275  |2304.328873|
+2	| Kamil	     |   2310  | product 303  |2293.111048|
+3	| Czaro	     |   65	   | product 10	  |62.28928108|
+3	| Czaro	     |   65	   | product 86	  |59.72326317|
+3	| Czaro	     |   65	   | product 593  |56.70062070|
+```
+
+Krótkie wyjaśnienie. Patrzymy na pierwszy wiersz z tabeli users_table. Mamy Jurka który ma na koncie 502zł, następnie z posortowanej po cenie malejąco listy produktów pokolei patrzymy czy produkt mieści się w budżecie. Jeśli nie to sprawdzamy kolejny. Jeśli jest ok to przpisujemy i lecimy dalej aż znajdziemy 3 produkty. Później przechodzimy do kolejnego usera. Tu poraz kolejny warto zauważyć że w podzapytaniu LATERAL porwónujemy kolumne p.price z zewnętrzą kolumną u.cash z tabeli user_table. W klasycznym JOIN to by nie przeszło :( .
+
+
+
+
+
