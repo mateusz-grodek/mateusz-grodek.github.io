@@ -3,7 +3,7 @@ title: "Lateral join: Wyjaśnienie i prosty przykład"
 toc: true
 ---
 
-Lateral join to obok left, right, inner i outer join kolejny ze sposobów złączeń w relacyjnych bazach danych. Pozwala na wygenerowanie wielu wierszy na podstawie pojedynczego wiersza danych oraz do odniesienia się do zmiennej z poza podzapytania. Wykorzystywany w PostgreSQL, Oracle, DB2  MS SQL. Jego znajomość jest przydane i warto się jej przyjrzeć. Może dzięki temu zaoczędzicie w przyszłości czas na szukanie rozwiązania lub zabłyśniecie na rozmowie rekrutacyjnej.
+Lateral join to, obok left, right, inner, outer join, kolejny ze sposobów złączeń w relacyjnych bazach danych. Pozwala na wygenerowanie wielu wierszy na podstawie pojedynczego wiersza danych oraz na odniesienie się do zmiennej spoza podzapytania. Wykorzystywany jest w PostgreSQL, Oracle, DB2 oraz MS SQL. Jego znajomość jest przydatna i warto się jej przyjrzeć. Może dzięki temu zaoszczędzicie w przyszłości czas na szukanie rozwiązania lub zabłyśniecie na rozmowie rekrutacyjnej.
 
 
 ### Jak działa SELECT
@@ -13,7 +13,7 @@ Select działa jak pętla która zwraca wiersze z tabeli.
 ```sql
 SELECT * FROM table
 ```
-Taki select w pythonie mógłby wyglądać następująco
+Taki select w pythonie mógłby wyglądać następująco:
 
 ```python
 for row in table:
@@ -23,7 +23,7 @@ for row in table:
 
 ### Jak działa LATERAL
 
-Jest to zagnieżdżona pętla która dla każdego wiersza z głównego SELECTa wykonuje zadanie z LATERAL JOINa.
+Działa, jak zagnieżdżona pętla, która dla każdego wiersza z głównego SELECTa wykonuje zadanie z LATERAL JOINa.
 
 ```sql
 SELECT * FROM foo, LATERAL (SELECT * FROM bar WHERE bar.id = foo.bar_id) ss;
@@ -77,7 +77,7 @@ SELECT * FROM buckets;
 5	| 2024-03-08  | 2024-03-11
 ```
 
-Stworzyliśmy tabelę z 5 koszykami. Aby wgenerować kolejne daty z koszyka możemy wykorzystać funkcję lateral join.
+Stworzyliśmy tabelę z 5 koszykami. Aby wygenerować kolejne daty z koszyka możemy wykorzystać funkcję lateral join.
 
 ```sql
 SELECT
@@ -126,12 +126,12 @@ id      | start_date  | end_date   | day_lateral
 5	| 2024-03-08  |	2024-03-11 | 2024-03-11
 ```
 
-Szybkie wyjaśnienie. Dla każdego wiersza z tabeli buckets generujemy dni pomiędzy start_date, a end_date. Dla pierwszego wiersza 2024-03-10 i 2024-03-15 będzie to 6 dni, które najpierw generujemy, następnie przypisują się do koszyka i sprawdzamy kolejny wiersz z tabeli bucket. Kolejny wiersz to 2024-03-09 i 2024-03-13, co daje nam 5 dni różnicy, zatem dla każdego koszyka LATERAL wygeneruje inną liczę wierszy.  Co ważne w naszym lateral subquery możemy się odniść do informacji z tabeli buckets w tym przypadku e.start_date i e.end_date `FROM generate_series(e.start_date, e.end_date, '1 day'::INTERVAL) AS day_lateral` w klasycznym podzapytaniu sypnęłoby błędem. 
+Szybkie wyjaśnienie. Dla każdego wiersza z tabeli buckets generujemy dni pomiędzy start_date, a end_date. Dla pierwszego wiersza 2024-03-10 i 2024-03-15 będzie to 6 dni, które najpierw generujemy, następnie przypisują się do koszyka i sprawdzamy kolejny wiersz z tabeli bucket. Kolejny wiersz to 2024-03-09 i 2024-03-13, co daje nam 5 dni różnicy, zatem dla każdego koszyka LATERAL wygeneruje inną liczbę wierszy.  Co ważne w naszym lateral subquery możemy się odnieść do informacji z tabeli buckets w tym przypadku e.start_date i e.end_date `FROM generate_series(e.start_date, e.end_date, '1 day'::INTERVAL) AS day_lateral` w klasycznym podzapytaniu sypnęłoby błędem. 
 
 
 ### Przykład nr. 2
 
-Stworzymy 2 tabelki. W jednej będzie nazwa użytkownika i dostępne środki na koncie. W drugiej tabelce będą produky z ich ceną. Naszym zdaniem będzie przypisanie każdemu użytkownikowi top 3 najdroższe produkty na które go stać. 
+Stworzymy 2 tabelki. W jednej będzie nazwa użytkownika i dostępne środki na koncie. W drugiej tabelce będą produkty z ich ceną. Naszym zadaniem będzie przypisanie każdemu użytkownikowi top 3 najdroższe produkty, na które go stać. 
 
 Najpierw przykładowe dane:
 
@@ -180,7 +180,7 @@ id  | user       | cash    |
 3   | Czaro      |  65     |
 ```
 
-Teraz przykad jakie kroki musimy wykonać aby uzyskać pożądany wynik. Użyjemy takiego pseudopythona:
+Teraz przykład jakie kroki musimy wykonać aby uzyskać pożądany wynik. Użyjemy takiego pseudopythona:
 
 ```python
 for user in users_table:
@@ -221,7 +221,7 @@ id      | username   | cash    |  productt_id |  price    |
 3	| Czaro	     |   65    | product 593  |56.70062070|
 ```
 
-Krótkie wyjaśnienie. Patrzymy na pierwszy wiersz z tabeli users_table. Mamy Jurka który ma na koncie 502zł, następnie z posortowanej po cenie malejąco listy produktów pokolei patrzymy czy produkt mieści się w budżecie. Jeśli nie to sprawdzamy kolejny. Jeśli jest ok to przpisujemy i lecimy dalej aż znajdziemy 3 produkty. Później przechodzimy do kolejnego usera. Tu poraz kolejny warto zauważyć że w podzapytaniu LATERAL porwónujemy kolumne p.price z zewnętrzą kolumną u.cash z tabeli user_table. W klasycznym JOIN to by nie przeszło :( .
+Krótkie wyjaśnienie. Patrzymy na pierwszy wiersz z tabeli users_table. Mamy Jurka który ma na koncie 502zł, następnie z posortowanej po cenie malejąco listy produktów po kolei patrzymy czy produkt mieści się w budżecie. Jeśli nie to sprawdzamy kolejny. Jeśli jest ok, to przypisujemy i lecimy dalej aż znajdziemy 3 produkty. Później przechodzimy do kolejnego usera. Tu po raz kolejny warto zauważyć, że w podzapytaniu LATERAL porównujemy kolumnę p.price z zewnętrzną kolumną u.cash z tabeli user_table. W klasycznym JOIN to by nie przeszło :( .
 
 
 
